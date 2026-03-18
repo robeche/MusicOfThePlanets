@@ -27,6 +27,9 @@ export class AudioEngine {
     this._beatTimer = null;
     this._beatLookahead = 0.12; // seconds ahead to schedule
     this._beatInterval = 25;    // ms between scheduler ticks
+
+    // User-set master volume (remembered across pause/play)
+    this._userVolume = 0.35;
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -34,6 +37,11 @@ export class AudioEngine {
      ══════════════════════════════════════════════════════════════════ */
   async init() {
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // iOS Safari keeps the context suspended until audio is played
+    // inside a user‑gesture call stack. Play a tiny silent buffer to
+    // force the unlock, then resume.
+    await this._unlockiOS();
 
     // Master volume
     this.masterGain = this.ctx.createGain();
@@ -304,7 +312,8 @@ export class AudioEngine {
 
   /* ── Master volume (0–1) ────────────────────────────────────────── */
   setMasterVolume(v) {
-    if (this.masterGain) {
+    this._userVolume = v;
+    if (this.masterGain && this.isPlaying) {
       this.masterGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.05);
     }
   }
@@ -323,16 +332,65 @@ export class AudioEngine {
     // Beat mode reads this.freqScale at hit‑fire time — no extra work needed
   }
 
+  /* ══════════════════════════════════════════════════════════════════
+     iOS / Safari unlock helper
+     iOS Safari requires actual audio output inside a user‑gesture to
+     transition the AudioContext out of "suspended". We play a silent
+     buffer and call resume() in the same synchronous call stack.
+     ══════════════════════════════════════════════════════════════════ */
+  async _unlockiOS() {
+    if (!this.ctx) return;
+
+    // Create a tiny 1‑sample silent buffer and play it
+    const buf = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(this.ctx.destination);
+    src.start(0);
+
+    // Resume the context (returns a promise)
+    if (this.ctx.state === 'suspended') {
+      try { await this.ctx.resume(); } catch (_) { /* ignore */ }
+    }
+
+    // Also register a one‑shot touchend fallback in case the context
+    // is still suspended (some older WebKit builds need this)
+    if (this.ctx.state !== 'running') {
+      const ctx = this.ctx;
+      const unlock = async () => {
+        if (ctx.state === 'suspended') {
+          try { await ctx.resume(); } catch (_) { /* ignore */ }
+        }
+        document.removeEventListener('touchend', unlock, true);
+        document.removeEventListener('click', unlock, true);
+      };
+      document.addEventListener('touchend', unlock, true);
+      document.addEventListener('click', unlock, true);
+    }
+  }
+
   /* ── Play / Pause ───────────────────────────────────────────────── */
   async play() {
     if (!this.ctx) await this.init();
-    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    // Always try to resume — needed on iOS after suspend / bg tab
+    if (this.ctx.state === 'suspended') {
+      try { await this.ctx.resume(); } catch (_) { /* ignore */ }
+    }
+    // Restore master volume (pause mutes instead of suspending)
+    if (this.masterGain) {
+      this.masterGain.gain.setTargetAtTime(this._userVolume, this.ctx.currentTime, 0.05);
+    }
     this.isPlaying = true;
     if (this.mode === 'beat') this._startBeatScheduler();
   }
 
   pause() {
-    if (this.ctx) this.ctx.suspend();
+    // On mobile we don't call ctx.suspend() — some browsers won't
+    // let us resume later outside a gesture.  Instead we just mute.
+    if (this.ctx) {
+      this.masterGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.04);
+    }
+    this._pausedVolume = this.masterGain ? this.masterGain.gain.value : 0.35;
     this.isPlaying = false;
     this._stopBeatScheduler();
   }
