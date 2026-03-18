@@ -302,8 +302,11 @@ function wireUI() {
   const btnDetach = document.getElementById('btn-detach');
   let ctxPlanetName = null;
 
-  // Close context menu on any click/tap
-  const closeCtx = () => ctxMenu.classList.add('hidden');
+  // Close context menu on any click/tap outside the menu
+  const closeCtx = (e) => {
+    if (e && e.target && ctxMenu.contains(e.target)) return;
+    ctxMenu.classList.add('hidden');
+  };
   document.addEventListener('pointerdown', closeCtx);
 
   scene.onRightClickPlanet((name, sx, sy) => {

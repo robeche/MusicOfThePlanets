@@ -432,6 +432,33 @@ export class SceneManager {
     }
   }
 
+  /* ── Right-click: detect planet under cursor ────────────────────── */
+  _onContextMenu(e) {
+    e.preventDefault(); // suppress browser context menu
+
+    this._updateMouse(e);
+    this._raycaster.setFromCamera(this._mouse, this.camera);
+
+    const planetBodies = [];
+    for (const [name, entry] of this.planetMeshes) {
+      entry.body.userData._planetName = name;
+      planetBodies.push(entry.body);
+    }
+
+    const hits = this._raycaster.intersectObjects(planetBodies);
+    if (hits.length > 0) {
+      const name = hits[0].object.userData._planetName;
+      if (this._onRightClickPlanet) {
+        this._onRightClickPlanet(name, e.clientX, e.clientY);
+      }
+    }
+  }
+
+  /** Register callback: (planetName, screenX, screenY) => void */
+  onRightClickPlanet(fn) {
+    this._onRightClickPlanet = fn;
+  }
+
   /* ── Render one frame ───────────────────────────────────────────── */
   render() {    // Smooth camera focus on a planet
     if (this._focusTarget) {
