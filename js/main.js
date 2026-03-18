@@ -13,6 +13,7 @@ import { SpectrumVisualizer } from './spectrum.js';
    ═══════════════════════════════════════════════════════════════════════ */
 let audioReady = false;
 let frozen = false;
+let realTime = false;
 
 // Simulation time (ms since Unix epoch, starts at "now")
 let simTime = Date.now();
@@ -75,7 +76,11 @@ function loop(now) {
 
   // Advance simulation time
   if (!frozen) {
-    simTime += dt * daysPerSec * 86400000; // ms
+    if (realTime) {
+      simTime = Date.now();
+    } else {
+      simTime += dt * daysPerSec * 86400000; // ms
+    }
   }
 
   // Update date display
@@ -160,6 +165,10 @@ function wireUI() {
   const speedSlider = document.getElementById('time-speed');
   const speedDisplay = document.getElementById('speed-display');
   const updateSpeed = () => {
+    if (realTime) {
+      speedDisplay.textContent = '1:1';
+      return;
+    }
     // Exponential mapping: 0 → 0.5 d/s, 100 → 500 d/s
     const t = speedSlider.value / 100;
     daysPerSec = 0.5 * Math.pow(1000, t);
@@ -171,7 +180,15 @@ function wireUI() {
       speedDisplay.textContent = (daysPerSec / 365.25).toFixed(1) + ' y/s';
     }
   };
-  speedSlider.addEventListener('input', updateSpeed);
+  speedSlider.addEventListener('input', () => {
+    // Touching the speed slider exits real-time mode
+    if (realTime) {
+      realTime = false;
+      btnRealtime.classList.remove('active');
+      btnRealtime.innerHTML = '<span class="icon">🕐</span> Real Time';
+    }
+    updateSpeed();
+  });
   updateSpeed();
 
   // ── Freeze time ──
@@ -182,6 +199,36 @@ function wireUI() {
     btnFreeze.innerHTML = frozen
       ? '<span class="icon">▶</span> Resume Time'
       : '<span class="icon">⏸</span> Freeze Time';
+    // Unfreeze exits real-time if it was on
+    if (!frozen && realTime) {
+      // keep real-time active, just resume
+    }
+  });
+
+  // ── Real time ──
+  const btnRealtime = document.getElementById('btn-realtime');
+  btnRealtime.addEventListener('click', () => {
+    realTime = !realTime;
+    btnRealtime.classList.toggle('active', realTime);
+    btnRealtime.innerHTML = realTime
+      ? '<span class="icon">🕐</span> Real Time ON'
+      : '<span class="icon">🕐</span> Real Time';
+
+    if (realTime) {
+      // Snap simulation to current wall clock
+      simTime = Date.now();
+      // Unfreeze if frozen
+      if (frozen) {
+        frozen = false;
+        btnFreeze.classList.remove('active');
+        btnFreeze.innerHTML = '<span class="icon">⏸</span> Freeze Time';
+      }
+      speedDisplay.textContent = '1:1';
+      speedSlider.disabled = true;
+    } else {
+      speedSlider.disabled = false;
+      updateSpeed();
+    }
   });
 
   // ── Frequency scale slider ──

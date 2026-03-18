@@ -243,6 +243,11 @@ input[type="range"]::-webkit-slider-thumb {
   transition: box-shadow 0.15s;
 }
 
+input[type="range"]:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 input[type="range"]::-webkit-slider-thumb:hover {
   box-shadow: 0 0 18px var(--accent-glow);
 }
