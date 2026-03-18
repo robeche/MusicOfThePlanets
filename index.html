@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🪐 Music of the Planets</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Three.js renders into this container -->
+    <div id="scene-container"></div>
+
+    <!-- UI overlay (pointer-events: none, children opt-in) -->
+    <div id="ui-overlay">
+
+      <!-- ─── Controls panel (top-left) ─── -->
+      <div id="controls-panel">
+        <h1>🪐 Music of the Planets</h1>
+        <p class="subtitle">Click anywhere in space to move the listener</p>
+
+        <div class="control-group">
+          <button id="btn-play" class="btn-primary">
+            <span class="icon">▶</span> Start Audio
+          </button>
+        </div>
+
+        <div class="control-group">
+          <label>Audio Mode</label>
+          <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="harmonic">♫ Harmonic</button>
+            <button class="mode-btn" data-mode="beat">🥁 Beat</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Master Volume</label>
+          <input type="range" id="master-volume" min="0" max="100" value="40">
+        </div>
+
+        <div class="control-group">
+          <label>Time Speed</label>
+          <div class="control-row">
+            <input type="range" id="time-speed" min="0" max="100" value="40">
+            <span id="speed-display">10 d/s</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <button id="btn-freeze" class="btn-secondary">
+            <span class="icon">⏸</span> Freeze Time
+          </button>
+        </div>
+
+        <div class="control-group">
+          <label>Simulation Date</label>
+          <span id="date-display">—</span>
+        </div>
+      </div>
+
+      <!-- ─── Planet info panel (top-right) ─── -->
+      <div id="planet-panel">
+        <div class="panel-header-row">
+          <h3>Planet Frequencies</h3>
+          <button id="btn-freq-info" class="btn-icon" title="How are frequencies calculated?">ℹ️</button>
+        </div>
+        <div class="control-group freq-scale-group">
+          <label>Frequency Scale</label>
+          <div class="control-row">
+            <input type="range" id="freq-scale" min="-100" max="100" value="0">
+            <span id="freq-scale-display">×1.0</span>
+          </div>
+        </div>
+        <div id="planet-list"></div>
+      </div>
+
+      <!-- ─── Frequency info modal ─── -->
+      <div id="freq-info-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+          <button id="btn-close-modal" class="btn-icon modal-close">✕</button>
+          <h2>🎵 How the Sonification Works</h2>
+          <div class="modal-body">
+            <p><strong>Base Frequency (Pitch)</strong></p>
+            <p>Each planet's pitch is derived from its <em>orbital period</em> using a logarithmic mapping. Faster orbits (shorter periods) produce higher pitches, slower orbits produce lower pitches.</p>
+            <p>The range is <strong>110 Hz (A2)</strong> for Neptune (slowest, ~165 years) to <strong>660 Hz (E5)</strong> for Mercury (fastest, ~88 days).</p>
+            <p class="formula">f = 660 × (110/660)<sup>ln(T/T<sub>min</sub>) / ln(T<sub>max</sub>/T<sub>min</sub>)</sup></p>
+            <p><strong>Frequency Scale Slider</strong></p>
+            <p>The slider applies a multiplier (×0.25 to ×4.0) to all base frequencies, letting you shift the entire sound palette up or down.</p>
+            <hr>
+
+            <p><strong>♫ Harmonic Mode</strong></p>
+            <p>Each planet plays a <em>continuous tone</em> built from a unique harmonic profile — a set of overtone amplitudes that shape its wave beyond a simple sine. These are inspired by physical characteristics (mass, rotation speed). A <code>PeriodicWave</code> is built from these harmonics.</p>
+            <p>A subtle <em>vibrato</em> (frequency modulation via LFO) is applied, with its rate derived from the planet's <em>sidereal rotation period</em> — faster-spinning planets wobble more quickly.</p>
+            <hr>
+
+            <p><strong>🥁 Beat Mode</strong></p>
+            <p>Each planet triggers <em>rhythmic percussive hits</em> instead of a continuous tone. The beat rate is derived from the planet's orbital period using a logarithmic mapping:</p>
+            <p class="formula">Mercury (88 d) → 0.18 s &nbsp;·&nbsp; Neptune (60 189 d) → 2.5 s</p>
+            <p>Faster orbiting planets beat more rapidly, slower ones pulse at a more relaxed pace.</p>
+            <p>Each hit is composed of three layered sounds:</p>
+            <ul class="modal-list">
+              <li><strong>Tonal ping</strong> — a short sine burst at the planet's frequency, with a quick pitch drop for a percussive feel.</li>
+              <li><strong>Sub-bass thump</strong> — a low-frequency impact weighted by the planet's <em>mass</em>. Gas giants like Jupiter and Saturn produce a heavier thump.</li>
+              <li><strong>Noise transient</strong> — a brief bandpass-filtered noise click that adds attack sharpness. The filter Q is also influenced by mass.</li>
+            </ul>
+            <p>All three components follow the same base frequency and <em>frequency scale</em> slider as Harmonic mode.</p>
+            <hr>
+
+            <p><strong>Volume (Amplitude)</strong></p>
+            <p>In both modes, volume follows the <em>inverse-square law</em> based on the listener's distance to each planet in the 3D scene:</p>
+            <p class="formula">amplitude = d<sub>ref</sub>² / (d<sub>ref</sub>² + d²)</p>
+            <p>At distance 0 the volume is 100%; at the reference distance it's 50%, falling off smoothly beyond.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Spectrum visualiser (bottom) ─── -->
+      <div id="spectrum-container">
+        <canvas id="spectrum-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import map for Three.js (ES module CDN) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <!-- Application entry point -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

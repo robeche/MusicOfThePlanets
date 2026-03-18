@@ -1,0 +1,572 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Music of the Planets — Stylesheet
+   ═══════════════════════════════════════════════════════════════════════ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --panel-bg: rgba(8, 12, 30, 0.88);
+  --panel-border: rgba(80, 120, 200, 0.25);
+  --accent: #4488ff;
+  --accent-glow: rgba(68, 136, 255, 0.35);
+  --cyan: #00ffcc;
+  --text-primary: #dde0f4;
+  --text-secondary: #8890b0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+}
+
+/* ── Layout ───────────────────────────────────────────────────────── */
+
+#app {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+#scene-container {
+  position: absolute;
+  inset: 0;
+}
+
+#scene-container canvas {
+  display: block;
+}
+
+#ui-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ── Controls panel (top-left) ────────────────────────────────────── */
+
+#controls-panel {
+  pointer-events: auto;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 280px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+#controls-panel h1 {
+  font-size: 1.25em;
+  font-weight: 700;
+  margin-bottom: 2px;
+  background: linear-gradient(135deg, #88bbff, #bb88ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 0.72em;
+  color: var(--text-secondary);
+  margin-bottom: 18px;
+  line-height: 1.4;
+}
+
+.control-group {
+  margin-bottom: 14px;
+}
+
+.control-group:last-child {
+  margin-bottom: 0;
+}
+
+.control-group label {
+  display: block;
+  font-size: 0.72em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-row span {
+  font-size: 0.78em;
+  color: var(--accent);
+  min-width: 58px;
+  text-align: right;
+  font-family: 'Consolas', 'SF Mono', monospace;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────── */
+
+.btn-primary, .btn-secondary {
+  width: 100%;
+  padding: 11px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.88em;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2e5cb8, #4c8bff);
+  color: #fff;
+  box-shadow: 0 4px 18px var(--accent-glow);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #3a6dd0, #5ea0ff);
+  box-shadow: 0 6px 28px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary.playing {
+  background: linear-gradient(135deg, #b83050, #ff5577);
+  box-shadow: 0 4px 18px rgba(255, 68, 102, 0.35);
+}
+
+.btn-primary.playing:hover {
+  background: linear-gradient(135deg, #cc3860, #ff6688);
+}
+
+.btn-secondary {
+  background: rgba(30, 40, 70, 0.5);
+  color: var(--text-primary);
+  border: 1px solid var(--panel-border);
+}
+
+.btn-secondary:hover {
+  background: rgba(40, 55, 95, 0.7);
+}
+
+.btn-secondary.active {
+  background: rgba(255, 180, 40, 0.12);
+  border-color: rgba(255, 180, 40, 0.45);
+  color: #ffbb44;
+}
+
+.icon {
+  font-size: 0.85em;
+}
+
+/* ── Mode toggle (Harmonic / Beat) ────────────────────────────────── */
+
+.mode-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: rgba(20, 30, 55, 0.6);
+  color: var(--text-secondary);
+  font-size: 0.8em;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+.mode-btn:first-child {
+  border-right: 1px solid var(--panel-border);
+}
+
+.mode-btn:hover {
+  background: rgba(40, 55, 95, 0.7);
+  color: var(--text-primary);
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, rgba(68, 136, 255, 0.18), rgba(100, 170, 255, 0.12));
+  color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* ── Range sliders ────────────────────────────────────────────────── */
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(40, 55, 90, 0.8);
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--accent-glow);
+  transition: box-shadow 0.15s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 18px var(--accent-glow);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(40, 55, 90, 0.8);
+  border: none;
+}
+
+#date-display {
+  font-size: 0.9em;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ── Planet info panel (top-right) ────────────────────────────────── */
+
+#planet-panel {
+  pointer-events: auto;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 230px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+#planet-panel h3 {
+  font-size: 0.78em;
+  font-weight: 600;
+  margin-bottom: 0;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.panel-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.btn-icon {
+  background: none;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.82em;
+  cursor: pointer;
+  padding: 2px 7px;
+  transition: all 0.2s;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.btn-icon:hover {
+  background: rgba(68, 136, 255, 0.15);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.freq-scale-group {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.planet-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 0.82em;
+  border-bottom: 1px solid rgba(80, 120, 200, 0.08);
+}
+
+.planet-item:last-child {
+  border-bottom: none;
+}
+
+.planet-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.planet-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.planet-freq {
+  color: var(--text-secondary);
+  font-family: 'Consolas', 'SF Mono', monospace;
+  font-size: 0.88em;
+}
+
+.planet-vol {
+  width: 36px;
+  text-align: right;
+  font-family: 'Consolas', 'SF Mono', monospace;
+  font-size: 0.85em;
+  transition: color 0.3s;
+}
+
+/* ── Spectrum visualiser (bottom) ─────────────────────────────────── */
+
+#spectrum-container {
+  pointer-events: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 110px;
+  background: linear-gradient(
+    to top,
+    rgba(6, 10, 25, 0.92) 0%,
+    rgba(6, 10, 25, 0.4) 65%,
+    transparent 100%
+  );
+}
+
+#spectrum-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+
+@media (max-width: 840px) {
+  #controls-panel {
+    width: 230px;
+    padding: 16px;
+  }
+
+  #controls-panel h1 {
+    font-size: 1.05em;
+  }
+
+  #planet-panel {
+    width: 180px;
+    padding: 14px;
+  }
+
+  .planet-freq {
+    display: none;
+  }
+
+  #spectrum-container {
+    height: 80px;
+  }
+}
+
+@media (max-width: 560px) {
+  #controls-panel {
+    top: 8px;
+    left: 8px;
+    width: calc(100% - 16px);
+    max-width: 300px;
+  }
+
+  #planet-panel {
+    display: none;
+  }
+
+  #spectrum-container {
+    height: 60px;
+  }
+}
+
+/* ── Scrollbar (for planet list if it overflows) ──────────────────── */
+
+#planet-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+#planet-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#planet-list::-webkit-scrollbar-thumb {
+  background: rgba(80, 120, 200, 0.3);
+  border-radius: 2px;
+}
+
+/* ── Frequency info modal ─────────────────────────────────────────── */
+
+.modal-overlay {
+  pointer-events: auto;
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 4, 15, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: modalFadeIn 0.2s ease;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  max-width: 520px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.7);
+}
+
+.modal-content h2 {
+  font-size: 1.15em;
+  font-weight: 700;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, #88bbff, #bb88ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-body p {
+  font-size: 0.85em;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.modal-body em {
+  color: var(--cyan);
+  font-style: italic;
+}
+
+.modal-body strong {
+  color: #ccddff;
+}
+
+.modal-body code {
+  background: rgba(68, 136, 255, 0.12);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'SF Mono', monospace;
+  font-size: 0.92em;
+  color: var(--accent);
+}
+
+.modal-body hr {
+  border: none;
+  border-top: 1px solid var(--panel-border);
+  margin: 16px 0;
+}
+
+.modal-list {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 8px 0 12px;
+}
+
+.modal-list li {
+  font-size: 0.85em;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.formula {
+  background: rgba(68, 136, 255, 0.08);
+  border-left: 3px solid var(--accent);
+  padding: 8px 14px;
+  border-radius: 0 8px 8px 0;
+  font-family: 'Consolas', 'SF Mono', monospace;
+  font-size: 0.88em !important;
+  color: var(--accent) !important;
+  margin: 12px 0 !important;
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 1em;
+}
+
+.modal-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: rgba(80, 120, 200, 0.3);
+  border-radius: 3px;
+}
