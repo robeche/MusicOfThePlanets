@@ -536,7 +536,103 @@ input[type="range"]::-moz-range-track {
     right: 10px;
   }
 }
+/* ── Planet context menu ─────────────────────────────────────────── */
 
+.ctx-menu {
+  pointer-events: auto;
+  position: absolute;
+  z-index: 200;
+  min-width: 180px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+  animation: ctxFadeIn 0.12s ease;
+}
+
+.ctx-menu.hidden {
+  display: none;
+}
+
+@keyframes ctxFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.ctx-item {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.85em;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.ctx-item:hover {
+  background: rgba(68, 136, 255, 0.15);
+  color: var(--accent);
+}
+
+/* ── Attached-to-planet badge ─────────────────────────────────── */
+
+.attached-badge {
+  pointer-events: auto;
+  position: absolute;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--cyan);
+  border-radius: 20px;
+  padding: 7px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--cyan);
+  box-shadow: 0 0 20px rgba(0, 255, 200, 0.15);
+  z-index: 50;
+  animation: ctxFadeIn 0.2s ease;
+}
+
+.attached-badge.hidden {
+  display: none;
+}
+
+.attached-badge span {
+  white-space: nowrap;
+}
+
+.btn-detach {
+  background: rgba(255, 80, 80, 0.15);
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  color: #ff8888;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.btn-detach:hover {
+  background: rgba(255, 80, 80, 0.3);
+  color: #ffaaaa;
+}
 /* ── Scrollbar (for planet list if it overflows) ──────────────────── */
 
 #planet-list::-webkit-scrollbar {

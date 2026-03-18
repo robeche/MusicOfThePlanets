@@ -90,6 +90,9 @@ export class SceneManager {
     this.renderer.domElement.addEventListener('pointermove', (e) => this._onPointerMove(e));
     this.renderer.domElement.addEventListener('pointerup', (e) => this._onPointerUp(e));
 
+    // Right-click handler (context menu on planets)
+    this.renderer.domElement.addEventListener('contextmenu', (e) => this._onContextMenu(e));
+
     // Resize handler
     window.addEventListener('resize', () => this.resize());
   }
@@ -402,6 +405,7 @@ export class SceneManager {
     this._updateMouse(e);
     if (this._rayToPlane()) {
       this.listenerTarget.copy(this._dragHit);
+      if (this._onListenerMove) this._onListenerMove();
     }
   }
 
@@ -421,6 +425,7 @@ export class SceneManager {
         this._updateMouse(e);
         if (this._rayToPlane()) {
           this.listenerTarget.copy(this._dragHit);
+          if (this._onListenerMove) this._onListenerMove();
         }
       }
       this._clickStart = null;

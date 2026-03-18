@@ -15,6 +15,9 @@ let audioReady = false;
 let frozen = false;
 let realTime = false;
 
+// Listener attached to a planet (null or planet name)
+let attachedPlanet = null;
+
 // Simulation time (ms since Unix epoch, starts at "now")
 let simTime = Date.now();
 
@@ -86,21 +89,30 @@ function loop(now) {
   // Update date display
   updateDateDisplay();
 
-  const listenerPos = scene.getListenerPosition();
-
   // Update each planet
   for (const ps of planetState) {
     const pos = calculatePosition(ps.planet, simTime);
     scene.updatePlanetPosition(ps.planet.name, pos.display.x, pos.display.y, pos.display.z);
 
-    // Distance from listener to planet (display units)
-    const dx = pos.display.x - listenerPos.x;
-    const dy = pos.display.y - listenerPos.y;
-    const dz = pos.display.z - listenerPos.z;
+    // If listener is attached to this planet, follow it
+    if (attachedPlanet === ps.planet.name) {
+      scene.setListenerTarget(pos.display.x, 0, pos.display.z);
+      scene.listenerPos.set(pos.display.x, 0, pos.display.z);
+    }
+  }
+
+  // Recompute distances after possible listener move
+  const updatedListenerPos = scene.getListenerPosition();
+  for (const ps of planetState) {
+    const entry = scene.planetMeshes.get(ps.planet.name);
+    if (!entry) continue;
+    const gp = entry.group.position;
+    const dx = gp.x - updatedListenerPos.x;
+    const dy = gp.y - updatedListenerPos.y;
+    const dz = gp.z - updatedListenerPos.z;
     const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
     ps.lastDist = dist;
 
-    // Update audio
     if (audioReady) {
       audio.updateDistance(ps.planet.name, dist);
     }
@@ -281,6 +293,57 @@ function wireUI() {
       }
     });
   }
+
+  // ── Planet right-click context menu (attach listener) ──
+  const ctxMenu = document.getElementById('planet-ctx-menu');
+  const ctxAttachBtn = document.getElementById('ctx-attach');
+  const attachedBadge = document.getElementById('attached-badge');
+  const attachedName = document.getElementById('attached-name');
+  const btnDetach = document.getElementById('btn-detach');
+  let ctxPlanetName = null;
+
+  // Close context menu on any click/tap
+  const closeCtx = () => ctxMenu.classList.add('hidden');
+  document.addEventListener('pointerdown', closeCtx);
+
+  scene.onRightClickPlanet((name, sx, sy) => {
+    ctxPlanetName = name;
+    // Label changes depending on whether already attached
+    ctxAttachBtn.textContent = (attachedPlanet === name)
+      ? '🎙️ Detach listener'
+      : '🎙️ Attach listener to ' + name;
+    // Position the menu near the click
+    ctxMenu.style.left = sx + 'px';
+    ctxMenu.style.top = sy + 'px';
+    ctxMenu.classList.remove('hidden');
+  });
+
+  ctxAttachBtn.addEventListener('click', () => {
+    closeCtx();
+    if (attachedPlanet === ctxPlanetName) {
+      // Detach
+      attachedPlanet = null;
+      attachedBadge.classList.add('hidden');
+    } else {
+      // Attach
+      attachedPlanet = ctxPlanetName;
+      attachedName.textContent = '🎙️ Listener → ' + ctxPlanetName;
+      attachedBadge.classList.remove('hidden');
+    }
+  });
+
+  btnDetach.addEventListener('click', () => {
+    attachedPlanet = null;
+    attachedBadge.classList.add('hidden');
+  });
+
+  // Detach when user manually moves the listener (click-to-move or drag)
+  scene.onListenerMove(() => {
+    if (attachedPlanet) {
+      attachedPlanet = null;
+      attachedBadge.classList.add('hidden');
+    }
+  });
 
   // ── Frequency info popup ──
   const modal = document.getElementById('freq-info-modal');
