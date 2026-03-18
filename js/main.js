@@ -205,6 +205,36 @@ function wireUI() {
   freqSlider.addEventListener('input', updateFreqScale);
   updateFreqScale();
 
+  // ── Mobile panel toggles ──
+  const btnToggleControls = document.getElementById('btn-toggle-controls');
+  const btnTogglePlanets = document.getElementById('btn-toggle-planets');
+  const controlsPanel = document.getElementById('controls-panel');
+  const planetPanel = document.getElementById('planet-panel');
+
+  if (btnToggleControls) {
+    btnToggleControls.addEventListener('click', () => {
+      const open = controlsPanel.classList.toggle('panel-visible');
+      btnToggleControls.classList.toggle('panel-open', open);
+      // Close the other panel
+      if (open) {
+        planetPanel.classList.remove('panel-visible');
+        btnTogglePlanets.classList.remove('panel-open');
+      }
+    });
+  }
+
+  if (btnTogglePlanets) {
+    btnTogglePlanets.addEventListener('click', () => {
+      const open = planetPanel.classList.toggle('panel-visible');
+      btnTogglePlanets.classList.toggle('panel-open', open);
+      // Close the other panel
+      if (open) {
+        controlsPanel.classList.remove('panel-visible');
+        btnToggleControls.classList.remove('panel-open');
+      }
+    });
+  }
+
   // ── Frequency info popup ──
   const modal = document.getElementById('freq-info-modal');
   document.getElementById('btn-freq-info').addEventListener('click', () => {
